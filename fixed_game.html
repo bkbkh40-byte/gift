@@ -22,7 +22,7 @@
             color: white;
             overflow: hidden;
             direction: rtl;
-            background-image: url('image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="none"/><path d="M0,50 L100,50 M50,0 L50,100" stroke="%234a00e0" stroke-width="0.5" opacity="0.3"/></svg>');
+            background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiB2aWV3Qm94PSIwIDAgMTAwIDEwMCI+PHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIGZpbGw9Im5vbmUiLz48cGF0aCBkPSJNMCA1MCBMMTAwIDUwIE01MCAwIEw1MCAxMDAiIHN0cm9rZT0iIzRhMDBlMCIgc3Ryb2tlLXdpZHRoPSIwLjUiIG9wYWNpdHk9IjAuMyIvPjwvc3ZnPg==');
         }
 
         .container {
@@ -240,7 +240,7 @@
     </div>
 
     <div id="scaryContainer" class="scary-container">
-        <img id="scaryImage" class="scary-image" src="https://placehold.co/600x400/ff0000/ffffff?text=😱+مَفَاجَأَة!+😱" alt="مفاجأة مرعبة">
+        <div class="scary-image" style="font-size: 8rem; line-height: 1; margin-bottom: 30px;">😱</div>
         <div class="scary-text">المفاجأة!</div>
         <div class="joke-text">كل هذا كان مزحة! 😂</div>
         <div class="final-message">الهدية الحقيقية هي أنك قرأت هذا كله! 🎉</div>
@@ -281,7 +281,7 @@
                 // إضافة تأثيرات عائمة
                 createFloatingEmojis();
                 
-                // تشغيل صوت مفاجأة
+                // تشغيل صوت مفاجأة (بدون صوت حقيقي)
                 playScarySound();
             });
             
@@ -318,10 +318,23 @@
             }
             
             function playScarySound() {
-                // صوت مفاجأة مقلد
-                const audio = new Audio('audio/mpeg;base64,SUQzBAAAAAABEVRYWFgAAAAtAAADY29tbWVudABCaWdTb3VuZEJhbmsuY29tIC8gTGFTb25vdGhlcXVlLm9yZwBURU5DAAAAHQAAA1N3aXRjaCBQbHVzIMKpIE5DSCBTb2Z0d2FyZQBUSVQyAAAABgAAAzIyMzUAVFNTRQAAAA8AAANMYXZmNTcuODMuMTAwAAAAAAAAAAAAAAD/80DEAAAAA0gAAAAATEFNRTMuMTAwVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQsRbAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQMSkAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV');
-                audio.volume = 0.3;
-                audio.play().catch(e => console.log("Audio play failed:", e));
+                // لا نستخدم صوتًا حقيقيًا لتجنب الخطأ 404
+                // بدلًا من ذلك، نستخدم تأثير بصري فقط
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.type = 'sine';
+                oscillator.frequency.value = 200;
+                gainNode.gain.value = 0.1;
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.start();
+                setTimeout(() => {
+                    oscillator.stop();
+                }, 1000);
             }
         });
         
