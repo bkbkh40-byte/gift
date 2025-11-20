@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Study Quest for Sham 🌟</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body {
+      background: linear-gradient(135deg,#0f0c29,#302b63,#24243e);
+      min-height:100vh; display:flex; justify-content:center; align-items:center; overflow:hidden; position:relative; color:white;
+    }
+    .star { position:absolute; background:white; border-radius:50%; opacity:0.7; z-index:1; pointer-events:none; animation:twinkle var(--duration,4s) infinite ease-in-out; }
+    @keyframes twinkle { 0%,100%{opacity:.3; transform:scale(.8);} 50%{opacity:1; transform:scale(1.2);} }
+    .game-container {
+      text-align:center; background:rgba(255,255,255,0.96); padding:50px 40px; border-radius:36px; box-shadow:0 25px 60px rgba(0,0,0,.5);
+      max-width:650px; z-index:10; position:relative; transform:scale(1); transition:transform .3s;
+    }
+    .game-container:hover { transform:scale(1.02); }
+    h1 { color:#2c3e50; font-size:40px; margin-bottom:22px; text-shadow:0 1px 3px rgba(0,0,0,.1); }
+    p { font-size:20px; color:#34495e; margin:18px 0; line-height:1.7; font-weight:500; }
+    .bubbles { display:grid; grid-template-columns:repeat(4,1fr); gap:20px; margin:40px auto; max-width:480px; }
+    .bubble {
+      width:95px; height:95px; border-radius:50%; background:linear-gradient(135deg,#a1c4fd,#c2e9fb);
+      display:flex; justify-content:center; align-items:center; font-size:36px; cursor:pointer;
+      transition:all .35s cubic-bezier(.175,.885,.32,1.275); box-shadow:0 6px 16px rgba(0,0,0,.2); user-select:none; position:relative; overflow:hidden;
+    }
+    .bubble::before { content:''; position:absolute; top:-50%; left:-50%; width:200%; height:200%; background:radial-gradient(circle, rgba(255,255,255,.6) 0%, transparent 70%); opacity:0; transition:opacity .3s; }
+    .bubble:hover { transform:scale(1.18) rotate(5deg); box-shadow:0 10px 25px rgba(44,62,80,.4); }
+    .bubble:hover::before { opacity:1; }
+    .bubble.clicked { background:linear-gradient(135deg,#27ae60,#2ecc71) !important; color:white; transform:scale(1.1) rotate(0deg); box-shadow:0 0 25px rgba(39,174,96,.9); animation:successPulse 1s; }
+    @keyframes successPulse { 
+      0%{box-shadow:0 0 0 0 rgba(46,204,113,.8); transform:scale(1);} 
+      50%{box-shadow:0 0 0 15px rgba(46,204,113,0); transform:scale(1.15);} 
+      100%{box-shadow:0 0 0 0 rgba(46,204,113,0); transform:scale(1.1);} 
+    }
+    .bubble.wrong { background:linear-gradient(135deg,#e74c3c,#c0392b) !important; color:white; opacity:.7; transform:scale(.85); box-shadow:0 0 15px rgba(231,76,60,.6); animation:shake 0.5s; }
+    @keyframes shake { 0%,100%{transform:translateX(0) scale(.85);} 25%{transform:translateX(-8px) scale(.85);} 75%{transform:translateX(8px) scale(.85);} }
+    .hint { font-style:italic; color:#2980b9; margin-top:25px; font-size:19px; font-weight:600; }
+    .progress { display:flex; justify-content:center; gap:12px; margin-top:20px; }
+    .progress-dot { width:16px; height:16px; border-radius:50%; background:#bdc3c7; transition:all .4s; box-shadow:0 2px 4px rgba(0,0,0,.1); }
+    .progress-dot.active { background:linear-gradient(135deg,#27ae60,#2ecc71); transform:scale(1.4); box-shadow:0 0 12px rgba(39,174,96,.6); }
+    .level-indicator { display:flex; justify-content:center; gap:6px; margin:15px 0; flex-wrap:wrap; }
+    .level-dot { width:10px; height:10px; border-radius:50%; background:#bdc3c7; transition:all .3s; }
+    .level-dot.active { background:linear-gradient(135deg,#27ae60,#2ecc71); box-shadow:0 0 8px rgba(39,174,96,.6); transform:scale(1.3); }
+    .surprise, .try-again, .skip-confirm, .question-modal, .challenge-modal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(10,10,25,.95); display:none; justify-content:center; align-items:center; z-index:200; flex-direction:column; backdrop-filter:blur(5px); padding:20px; }
+    .surprise-content, .try-again-content, .skip-confirm-content, .question-content, .challenge-content { background:white; padding:50px 40px; border-radius:40px; text-align:center; max-width:650px; width:90%; box-shadow:0 20px 70px rgba(0,0,0,.6); animation:popIn .8s cubic-bezier(.175,.885,.32,1.275); max-height:85vh; overflow-y:auto; }
+    .surprise-content h2, .try-again-content h2, .skip-confirm-content h2, .question-content h2, .challenge-content h2 { color:#2c3e50; font-size:32px; margin-bottom:20px; line-height:1.4; }
+    .surprise-content p, .try-again-content p, .skip-confirm-content p, .question-content p, .challenge-content p { color:#34495e; font-size:18px; line-height:1.8; }
+    @keyframes popIn { 0%{transform:scale(.5);opacity:0} 100%{transform:scale(1);opacity:1} }
+    .close-btn, .try-again-btn, .skip-btn, .question-btn, .challenge-btn { margin-top:25px; padding:16px 50px; border-radius:50px; font-size:21px; font-weight:700; cursor:pointer; border:none; box-shadow:0 8px 25px rgba(26,42,108,.6); transition:all .3s; }
+    .close-btn, .try-again-btn { background:linear-gradient(135deg,#2980b9,#1a2a6c); color:white; }
+    .close-btn:hover, .try-again-btn:hover { transform:translateY(-3px); box-shadow:0 12px 30px rgba(26,42,108,.8); }
+    .skip-btn.confirm { background:linear-gradient(135deg,#e74c3c,#c0392b); color:white; }
+    .skip-btn.cancel { background:linear-gradient(135deg,#2980b9,#1a2a6c); color:white; }
+    .question-btn.submit { background:linear-gradient(135deg,#2980b9,#1a2a6c); color:white; }
+    .question-btn.cancel { background:linear-gradient(135deg,#e74c3c,#c0392b); color:white; }
+    .question-btn.challenge { background:linear-gradient(135deg,#2ecc71,#27ae60); color:white; }
+    .challenge-btn.complete { background:linear-gradient(135deg,#2ecc71,#27ae60); color:white; }
+    .challenge-btn.back { background:linear-gradient(135deg,#2980b9,#1a2a6c); color:white; }
+    .confetti { position:absolute; width:12px; height:12px; z-index:199; pointer-events:none; }
+    .level-complete { display:none; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(255,255,255,.95); padding:40px 60px; border-radius:30px; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,.3); z-index:100; animation:popIn .8s cubic-bezier(.175,.885,.32,1.275); }
+    .level-complete h3 { color:#2c3e50; font-size:36px; margin-bottom:20px; }
+    .level-complete p { color:#34495e; font-size:22px; margin-bottom:30px; line-height:1.7; }
+    .attempts { margin-top:15px; font-size:18px; color:#e74c3c; font-weight:600; }
+    .timer { font-size:26px; font-weight:bold; color:#e74c3c; margin:15px 0; text-shadow:0 2px 4px rgba(0,0,0,.3); }
+    .pairs-found { font-size:20px; color:#2980b9; font-weight:600; margin-top:10px; }
+    .moves { font-size:18px; color:#e67e22; font-weight:600; margin-top:8px; }
+    .memory-grid { display:grid; gap:15px; margin:30px auto; max-width:420px; width:100%; }
+    .memory-card { width:80px; height:80px; perspective:1000px; margin:0 auto; cursor:pointer; }
+    .memory-card-inner { position:relative; width:100%; height:100%; text-align:center; transition:transform .5s; transform-style:preserve-3d; }
+    .memory-card.flipped .memory-card-inner { transform:rotateY(180deg); }
+    .memory-card-front, .memory-card-back { position:absolute; width:100%; height:100%; backface-visibility:hidden; display:flex; justify-content:center; align-items:center; border-radius:18px; font-size:32px; box-shadow:0 4px 12px rgba(0,0,0,.2); }
+    .memory-card-front { background:linear-gradient(135deg,#a1c4fd,#c2e9fb); transform:rotateY(0deg); }
+    .memory-card-back { background:linear-gradient(135deg,#667eea,#764ba2); color:white; transform:rotateY(180deg); }
+    .memory-card.matched .memory-card-inner { transform:rotateY(180deg); }
+    .memory-card.matched .memory-card-front, .memory-card.matched .memory-card-back { opacity:0.4; filter:grayscale(0.5); pointer-events:none; }
+    .skip-button { position:absolute; top:20px; right:20px; background:linear-gradient(135deg,#e74c3c,#c0392b); color:white; border:none; border-radius:50px; padding:12px 20px; font-size:18px; font-weight:700; cursor:pointer; transition:all .3s; box-shadow:0 6px 20px rgba(231,76,60,.6); z-index:11; }
+    .skip-button:hover { transform:translateY(-3px) scale(1.05); box-shadow:0 10px 25px rgba(231,76,60,.8); }
+    .question-input { width:80%; padding:15px 20px; font-size:20px; border:2px solid #bdc3c7; border-radius:15px; margin-bottom:30px; text-align:center; transition:border-color 0.3s; }
+    .answer-confirmation { margin-top:20px; font-size:18px; color:#2980b9; font-weight:600; min-height:24px; }
+    @media (max-width:520px) {
+      .game-container { padding:30px 16px; max-width:92vw; }
+      .bubble { width:75px; height:75px; font-size:28px;}
+      .bubbles { gap:12px; max-width:95%; grid-template-columns:repeat(4,1fr); }
+      .memory-card { width:65px; height:65px;}
+      .memory-card-front, .memory-card-back { font-size:24px; }
+      .memory-grid { max-width:95%; gap:8px; }
+      .surprise-content, .try-again-content, .skip-confirm-content, .question-content, .challenge-content { padding:30px 20px; max-height:90vh; }
+      .surprise-content h2, .try-again-content h2, .skip-confirm-content h2, .question-content h2, .challenge-content h2 { font-size:24px; }
+      .surprise-content p, .try-again-content p, .skip-confirm-content p { font-size:15px; line-height:1.6; }
+    }
+    .morning-message { position: fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:white; padding:50px 60px; border-radius:30px; text-align:center; box-shadow:0 30px 80px rgba(0,0,0,.4); z-index:9999; font-family:'Segoe UI',sans-serif; max-width:90%; max-height:85vh; overflow-y:auto; }
+    .morning-message h2 { color:#2c3e50; margin-bottom:15px; }
+    .morning-message p { color:#34495e; font-size:20px; line-height:1.8; }
+    .morning-message .close-btn { margin-top:25px; padding:14px 40px; font-size:18px; }
+    .secret-note { position: fixed; bottom: 20px; right: 20px; background: linear-gradient(135deg, #2980b9, #1a2a6c); color: white; padding: 15px 25px; border-radius: 30px; font-size: 17px; box-shadow: 0 10px 30px rgba(0,0,0,.4); z-index: 9999; animation: fadeInUp 0.8s ease-out; max-width: 280px; text-align: center; }
+    @keyframes fadeInUp { from { opacity:0; transform:translateY(30px); } to { opacity:1; transform:translateY(0); } }
+  </style>
+</head>
+<body>
+<script>
+  for (let i = 0; i < 80; i++) {
+    const star = document.createElement('div');
+    star.className = 'star';
+    star.style.left = Math.random() * 100 + 'vw';
+    star.style.top = Math.random() * 100 + 'vh';
+    star.style.width = (Math.random() * 4 + 1) + 'px';
+    star.style.height = star.style.width;
+    star.style.setProperty('--duration', (Math.random() * 5 + 3) + 's');
+    star.style.animationDelay = Math.random() * 5 + 's';
+    document.body.appendChild(star);
+  }
+
+// ✅ تعديل لإخفاء عناصر مرحلة السرعة بعد انتهائها
+function cleanupSpeedClick(){
+    const bubbles = document.querySelectorAll('.bubble');
+    bubbles.forEach(b => b.remove()); // إزالة جميع الفقاعات
+    hint.textContent = "✅ المرحلة انتهت!";
+}
+
+// تعديل في createSpeedClickGame لإضافة استدعاء cleanupSpeedClick عند انتهاء الوقت
+const originalCreateSpeedClickGame = createSpeedClickGame;
+createSpeedClickGame = function(level){
+    originalCreateSpeedClickGame(level);
+    const oldTimer = timer;
+    const checkInterval = setInterval(()=>{
+        if(timeLeft <= 0){
+            cleanupSpeedClick();
+            clearInterval(checkInterval);
+        }
+    }, 500);
+};
+
+</script>
+<div class="game-container" id="gameContainer">
+  <h1 id="levelTitle">📚 Find the 3 Study Symbols!</h1>
+  <p id="levelDescription">Help <strong>Sham</strong> unlock his potential!</p>
+  <div class="level-indicator" id="levelIndicator">
+    <div class="level-dot active"></div><div class="level-dot"></div><div class="level-dot"></div><div class="level-dot"></div><div class="level-dot"></div>
+    <div class="level-dot"></div><div class="level-dot"></div><div class="level-dot"></div><div class="level-dot"></div><div class="level-dot"></div>
+    <div class="level-dot"></div><div class="level-dot"></div><div class="level-dot"></div><div class="level-dot"></div><div class="level-dot"></div>
+  </div>
+  <div class="bubbles" id="bubbles"></div>
+  <p class="hint" id="hint">Begin your quest, Sham!</p>
+  <div class="attempts" id="attempts">Attempts: 0/5</div>
+  <div class="timer" id="timer" style="display:none;">Time: 60s</div>
+  <div class="pairs-found" id="pairsFound" style="display:none;">Pairs: 0/3</div>
+  <div class="moves" id="moves" style="display:none;">Moves: 0</div>
+  <div class="progress" id="progress">
+    <div class="progress-dot active"></div><div class="progress-dot"></div><div class="progress-dot"></div>
+  </div>
+  <button class="skip-button" id="skipButton">Skip Level</button>
+</div>
+<div class="surprise" id="surprise">
+  <div class="surprise-content">
+    <h2>🎓 I'm So Proud of You, Sham! ❤️</h2>
+    <p style="margin-bottom:25px;">I know you've been through so many difficult times, and I'm truly sorry for everything that happened to you.<br><br>I want to tell you: <strong>Keep going. Be stronger.</strong><br>I'm afraid for you — afraid of sadness, of losses, of the world's sorrows.<br>I'm afraid your heart might break, afraid you might feel overwhelmed.<br><br>I want to protect you from everything that hurts you, every single moment.<br>I entrust you to Allah every second. ❤️💕<br><br><strong style="color:#e74c3c; font-size:22px;">You are my favorite.</strong><br><br><em style="color:#2980b9; font-size:19px; display:block; margin:20px 0;">Remember: Every challenge you face is shaping you into someone extraordinary.<br>Your effort today becomes your strength tomorrow.<br>You're not just studying — you're building dreams into reality.</em><br>I believe in you more than you know.<br>When the nights get long and the books seem endless, remember:<br><strong>You are capable of incredible things.</strong><br><br>May Allah protect your heart, guide your path, and grant you success in everything you do.<br>May He ease your worries and fill your days with peace and happiness.<br><br><strong style="color:#27ae60; font-size:20px;">Your journey is just beginning, and I'm so excited to see where it takes you! ✨🌟</strong></p>
+    <button class="close-btn" id="closeBtn">Play Again</button>
+  </div>
+</div>
+<div class="level-complete" id="levelComplete">
+  <h3>🎉 Level Complete!</h3>
+  <p>Great job, Sham!</p>
+  <button class="close-btn" id="nextLevelBtn">Next Level</button>
+</div>
+<div class="try-again" id="tryAgain">
+  <div class="try-again-content">
+    <h2>😔 Out of Attempts!</h2>
+    <p>Don't worry, Sham! Every mistake makes you stronger.<br><br>Take a breath and try again! 💪</p>
+    <button class="try-again-btn" id="tryAgainBtn">Try Again</button>
+  </div>
+</div>
+<div class="skip-confirm" id="skipConfirm">
+  <div class="skip-confirm-content">
+    <h2>⚠️ Skip This Level?</h2>
+    <p>You'll need to answer a personal question correctly to skip.</p>
+    <div style="display:flex; gap:15px; justify-content:center; flex-wrap:wrap; margin-top:30px;">
+      <button class="skip-btn cancel" id="cancelSkip">Keep Trying</button>
+      <button class="skip-btn confirm" id="confirmSkip">Answer Question</button>
+    </div>
+  </div>
+</div>
+<div class="question-modal" id="questionModal">
+  <div class="question-content">
+    <h2>💌 Personal Question</h2>
+    <p id="questionText">What is the first time we met?</p>
+    <input type="text" class="question-input" id="questionInput" placeholder="Type your answer...">
+    <div class="answer-confirmation" id="answerConfirmation"></div>
+    <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:20px;">
+      <button class="question-btn cancel" id="cancelQuestion">Back</button>
+      <button class="question-btn challenge" id="challengeQuestion">Take Challenge</button>
+      <button class="question-btn submit" id="submitQuestion">Submit</button>
+    </div>
+  </div>
+</div>
+<div class="challenge-modal" id="challengeModal">
+  <div class="challenge-content">
+    <h2>🏆 Special Challenge</h2>
+    <p><strong>Challenge:</strong> Send LET a message saying<br>"I completed the challenge for Sham!"<br><br>Once done, click below to reveal the answer.</p>
+    <div style="display:flex; gap:15px; justify-content:center; flex-wrap:wrap; margin-top:30px;">
+      <button class="challenge-btn back" id="backFromChallenge">Back</button>
+      <button class="challenge-btn complete" id="completeChallenge">I Completed It!</button>
+    </div>
+  </div>
+</div>
+<script>
+const levelThemes=[{name:'study',symbols:['📚','🧠','🎓','💡','✏️','🔍','🎯','🌟','🚀','🏆','📊','🔬','📖','🧮','🌐','📈'],color1:'#a1c4fd',color2:'#c2e9fb'},{name:'nature',symbols:['🌸','🌺','🌻','🌹','🌷','🌱','🌿','🍀','🌾','🌳','🌲','🌴','🍁','🍂','🌵','🌼'],color1:'#84fab0',color2:'#8fd3f4'},{name:'space',symbols:['🌟','⭐','✨','💫','🌙','🌛','🌜','🌠','🪐','🌌','☄️','🛸','🚀','🛰️','🌍','🌎'],color1:'#667eea',color2:'#764ba2'},{name:'food',symbols:['🍕','🍔','🍟','🌭','🍿','🧁','🍰','🎂','🍪','🍩','🍦','🍨','🍧','🥤','🍹','🍷'],color1:'#ff9a9e',color2:'#fecfef'},{name:'animals',symbols:['🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐨','🐯','🦁','🐮','🐷','🐸','🐵','🐔'],color1:'#ffecd2',color2:'#fcb69f'},{name:'tech',symbols:['💻','⌨️','🖱️','🖥️','📱','☎️','📞','📟','📠','🔋','🔌','💡','🔦','💾','💿','📀'],color1:'#4facfe',color2:'#00f2fe'}];
+const personalQuestions=[{question:"What is the first time we met?",answers:["4/9","4/9/2025","4/9/25","april 9","april 9th","april 9, 2025","04/09","04/09/2025"]},{question:"What was my age when I used the PC?",answers:["4","four","4 years old","four years old"]},{question:"Did I support you enough?",answers:["yes","absolutely","definitely","of course","totally"]},{question:"What is something you noticed about me but never mentioned?",answers:["let","sham","let/sham","sham/let"]},{question:"Is there something I do that bothers you?",answers:["let","sham"]},{question:"What is one thing about me that always makes you smile?",answers:["let","sham"]},{question:"What about me surprised you as you got to know me better?",answers:["let","sham"]},{question:"What is something I used to do for you but now no longer do, and you want me to do it again?",answers:["let","sham"]},{question:"What is something we used to do that you miss and wish we did it more?",answers:["let","sham"]}];
+
+function getRandomTheme(){return levelThemes[Math.floor(Math.random()*levelThemes.length)];}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+function generateRandomLevels(){
+  const t1=getRandomTheme(),t2=getRandomTheme(),t3=getRandomTheme(),t4=getRandomTheme(),t5=getRandomTheme(),t6=getRandomTheme();
+  return [
+    {title:`${t1.symbols[0]} Level 1: Find 3 Symbols!`,description:"Click carefully to find the <u>3 special symbols</u>.",symbols:shuffle([...t1.symbols]).slice(0,12),correctCount:3,maxAttempts:5,correctSymbols:null,canSkip:true,theme:t1},
+    {title:`${t2.symbols[1]} Level 2: Spot 4 Icons!`,description:"Find the <u>4 special symbols</u>.",symbols:shuffle([...t2.symbols]).slice(0,16),correctCount:4,maxAttempts:6,correctSymbols:null,canSkip:true,theme:t2},
+    {title:`🧩 Level 3: Pattern Memory!`,description:"Watch and recreate the pattern!",type:"pattern",patternLength:4,showTime:3500,canSkip:true,theme:t3},
+    {title:`🔤 Level 4: Word Unscramble!`,description:"Unscramble motivational words!",type:"wordscramble",words:["SUCCESS","DREAM","FOCUS"],canSkip:true,theme:t4},
+    {title:`${t4.symbols[0]} Level 5: Memory Pairs!`,description:"Match <u>3 pairs</u> in 40 seconds!",type:"memory",pairs:3,symbols:shuffle([...t4.symbols]).slice(0,6),maxTime:40,maxMoves:15,canSkip:true,theme:t4},
+    {title:`🎯 Level 6: Speed Click!`,description:"Click only the study symbols! 30 seconds!",type:"speedclick",targetSymbols:['📚','🎓','✏️'],distractors:['🎮','🎬','🎵','🎪','🎨','🎭'],duration:30,targetCount:15,canSkip:true,theme:t1},
+    {title:`📖 Level 7: Sham's Story!`,description:"Read and reflect on your journey!",type:"story",canSkip:true,theme:t5},
+    {title:`🔢 Level 8: Math Sprint!`,description:"Solve 6 problems in 50 seconds!",type:"math",questionsCount:6,maxTime:50,canSkip:true,theme:t6},
+    {title:`${t5.symbols[2]} Level 9: Memory Challenge!`,description:"Match <u>4 pairs</u> in 45 seconds!",type:"memory",pairs:4,symbols:shuffle([...t5.symbols]).slice(0,8),maxTime:45,maxMoves:20,canSkip:true,theme:t5},
+    {title:`🎨 Level 10: Creative Canvas!`,description:"Express yourself with art!",type:"canvas",canSkip:true,theme:t2},
+    {title:`🧠 Level 11: Pattern Expert!`,description:"Master this 6-symbol pattern!",type:"pattern",patternLength:6,showTime:4500,canSkip:true,theme:t3},
+    {title:`🔤 Level 12: Word Master!`,description:"Unscramble harder words!",type:"wordscramble",words:["PERSISTENCE","BRILLIANT","COURAGE","WISDOM"],canSkip:true,theme:t4},
+    {title:`⚡ Level 13: Speed Memory!`,description:"Match <u>5 pairs</u> in 35 seconds!",type:"memory",pairs:5,symbols:shuffle([...t6.symbols]).slice(0,10),maxTime:35,maxMoves:25,canSkip:true,theme:t6},
+    {title:`🎯 Level 14: Ultimate Test!`,description:"Multi-stage final challenge!",type:"ultimate",canSkip:true,theme:t1},
+    {title:`🏆 Level 15: FINAL BOSS!`,description:"The hardest challenge! 6 pairs, 30s!",type:"memory",pairs:6,symbols:shuffle([...t5.symbols]).slice(0,12),maxTime:30,maxMoves:22,canSkip:true,theme:t5}
+  ];
+}
+
+let levels=generateRandomLevels();
+let currentLevel=0,clicks=0,correctClicks=0,attempts=0,timer=null,timeLeft=0;
+let flippedCards=[],matchedPairs=0,moves=0,usedQuestionIndices=[];
+let patternSequence=[],playerPattern=[],currentWordIndex=0;
+let mathQuestions=[],currentMathIndex=0,mathCorrect=0;
+let ultimateStage=0,ultimateCorrect=0;
+let speedClickScore=0,speedClickClicks=0;
+
+const gameContainer=document.getElementById('gameContainer'),bubblesContainer=document.getElementById('bubbles'),hint=document.getElementById('hint'),surprise=document.getElementById('surprise'),closeBtn=document.getElementById('closeBtn');
+const progressDots=document.querySelectorAll('#progress .progress-dot'),levelTitle=document.getElementById('levelTitle'),levelDescription=document.getElementById('levelDescription');
+const attemptsDisplay=document.getElementById('attempts'),timerDisplay=document.getElementById('timer'),pairsFoundDisplay=document.getElementById('pairsFound'),movesDisplay=document.getElementById('moves');
+const levelComplete=document.getElementById('levelComplete'),nextLevelBtn=document.getElementById('nextLevelBtn'),tryAgain=document.getElementById('tryAgain'),tryAgainBtn=document.getElementById('tryAgainBtn');
+const skipButton=document.getElementById('skipButton'),skipConfirm=document.getElementById('skipConfirm'),cancelSkipBtn=document.getElementById('cancelSkip'),confirmSkipBtn=document.getElementById('confirmSkip');
+const questionModal=document.getElementById('questionModal'),questionText=document.getElementById('questionText'),questionInput=document.getElementById('questionInput');
+const submitQuestionBtn=document.getElementById('submitQuestion'),cancelQuestionBtn=document.getElementById('cancelQuestion'),challengeQuestionBtn=document.getElementById('challengeQuestion');
+const answerConfirmation=document.getElementById('answerConfirmation'),challengeModal=document.getElementById('challengeModal');
+const backFromChallengeBtn=document.getElementById('backFromChallenge'),completeChallengeBtn=document.getElementById('completeChallenge');
+
+function initLevel(levelIndex){
+  clicks=0;correctClicks=0;attempts=0;flippedCards=[];matchedPairs=0;moves=0;patternSequence=[];playerPattern=[];currentWordIndex=0;
+  mathQuestions=[];currentMathIndex=0;mathCorrect=0;ultimateStage=0;ultimateCorrect=0;speedClickScore=0;speedClickClicks=0;
+  if(timer){clearInterval(timer);timer=null;}
+  const level=levels[levelIndex];
+  levelTitle.innerHTML=level.title;
+  levelDescription.innerHTML=level.description;
+  document.querySelectorAll('.level-dot').forEach((dot,i)=>dot.classList.toggle('active',i===levelIndex));
+  skipButton.style.display=level.canSkip?'block':'none';
+  if(level.type!=='memory'){progressDots.forEach(dot=>dot.classList.remove('active'));}
+  bubblesContainer.innerHTML='';bubblesContainer.className='bubbles';
+  
+  if(level.type==='memory'){
+    attemptsDisplay.style.display='none';timerDisplay.style.display='block';pairsFoundDisplay.style.display='block';movesDisplay.style.display='block';
+    progressDots.forEach(dot=>dot.style.display='none');createMemoryGame(level);
+  }else if(level.type==='pattern'){
+    attemptsDisplay.style.display='none';timerDisplay.style.display='none';pairsFoundDisplay.style.display='none';movesDisplay.style.display='none';
+    progressDots.forEach(dot=>dot.style.display='none');createPatternGame(level);
+  }else if(level.type==='wordscramble'){
+    attemptsDisplay.style.display='none';timerDisplay.style.display='none';pairsFoundDisplay.style.display='none';movesDisplay.style.display='none';
+    progressDots.forEach(dot=>dot.style.display='none');createWordScrambleGame(level);
+  }else if(level.type==='story'){
+    attemptsDisplay.style.display='none';timerDisplay.style.display='none';pairsFoundDisplay.style.display='none';movesDisplay.style.display='none';
+    progressDots.forEach(dot=>dot.style.display='none');createStoryGame(level);
+  }else if(level.type==='math'){
+    attemptsDisplay.style.display='none';timerDisplay.style.display='block';pairsFoundDisplay.style.display='none';movesDisplay.style.display='none';
+    progressDots.forEach(dot=>dot.style.display='none');createMathGame(level);
+  }else if(level.type==='canvas'){
+    attemptsDisplay.style.display='none';timerDisplay.style.display='none';pairsFoundDisplay.style.display='none';movesDisplay.style.display='none';
+    progressDots.forEach(dot=>dot.style.display='none');createCanvasGame(level);
+  }else if(level.type==='ultimate'){
+    attemptsDisplay.style.display='none';timerDisplay.style.display='block';pairsFoundDisplay.style.display='none';movesDisplay.style.display='none';
+    progressDots.forEach(dot=>dot.style.display='none');createUltimateChallenge(level);
+  }else if(level.type==='speedclick'){
+    attemptsDisplay.style.display='none';timerDisplay.style.display='block';pairsFoundDisplay.style.display='none';movesDisplay.style.display='none';
+    progressDots.forEach(dot=>dot.style.display='none');createSpeedClickGame(level);
+  }else{
+    attemptsDisplay.style.display='block';timerDisplay.style.display='none';pairsFoundDisplay.style.display='none';movesDisplay.style.display='none';
+    progressDots.forEach(dot=>dot.style.display='inline-block');attemptsDisplay.textContent=`Attempts: ${attempts}/${level.maxAttempts}`;
+    createFindGame(level);
+  }
+  hint.textContent=level.type==='memory'?"Click cards to find pairs!":"Begin your quest, Sham!";
+  gameContainer.style.display='block';surprise.style.display='none';levelComplete.style.display='none';tryAgain.style.display='none';
+  skipConfirm.style.display='none';questionModal.style.display='none';challengeModal.style.display='none';
+  document.querySelector('.morning-message')?.remove();document.querySelector('.secret-note')?.remove();
+}
+
+function createFindGame(level){
+  const shuffledSymbols=shuffle([...level.symbols]);level.correctSymbols=shuffledSymbols.slice(0,level.correctCount);
+  const allSymbols=shuffle([...level.symbols]);
+  allSymbols.forEach(symbol=>{
+    const bubble=document.createElement('div');bubble.className='bubble';bubble.textContent=symbol;
+    bubble.dataset.isCorrect=level.correctSymbols.includes(symbol)?'true':'false';
+    if(level.theme){bubble.style.background=`linear-gradient(135deg,${level.theme.color1},${level.theme.color2})`;}
+    bubblesContainer.appendChild(bubble);
+  });
+  document.querySelectorAll('.bubble').forEach(b=>{b.removeEventListener('click',handleBubbleClick);b.addEventListener('click',handleBubbleClick);});
+}
+
+function createPatternGame(level){
+  bubblesContainer.className='bubbles';bubblesContainer.style.display='grid';bubblesContainer.style.gridTemplateColumns='repeat(4,1fr)';
+  const allSymbols=shuffle([...level.theme.symbols]).slice(0,16);
+  patternSequence=shuffle([...allSymbols]).slice(0,level.patternLength);
+  hint.textContent=`Watch carefully! ${level.showTime/1000}s...`;
+  patternSequence.forEach((symbol,idx)=>{
+    setTimeout(()=>{
+      const bubble=document.createElement('div');bubble.className='bubble clicked';bubble.textContent=symbol;
+      bubble.style.background=`linear-gradient(135deg,${level.theme.color1},${level.theme.color2})`;
+      bubble.style.animation='successPulse 0.5s';bubblesContainer.appendChild(bubble);
+    },idx*700);
+  });
+  setTimeout(()=>{
+    bubblesContainer.innerHTML='';hint.textContent="Recreate the pattern!";
+    const shuffledForDisplay=shuffle([...allSymbols]);
+    shuffledForDisplay.forEach(symbol=>{
+      const bubble=document.createElement('div');bubble.className='bubble';bubble.textContent=symbol;bubble.dataset.symbol=symbol;
+      bubble.style.background=`linear-gradient(135deg,${level.theme.color1},${level.theme.color2})`;
+      bubble.addEventListener('click',handlePatternClick);bubblesContainer.appendChild(bubble);
+    });
+  },level.showTime+(level.patternLength*700));
+}
+
+function handlePatternClick(e){
+  const bubble=e.currentTarget,symbol=bubble.dataset.symbol;
+  if(bubble.classList.contains('clicked'))return;
+  playerPattern.push(symbol);bubble.classList.add('clicked');bubble.style.opacity='0.5';bubble.style.pointerEvents='none';
+  const currentIndex=playerPattern.length-1;
+  if(playerPattern[currentIndex]!==patternSequence[currentIndex]){
+    hint.textContent="❌ Wrong order!";setTimeout(()=>showTryAgain(),1000);return;
+  }
+  if(playerPattern.length===patternSequence.length){
+    hint.textContent="🎉 Perfect!";setTimeout(()=>showLevelComplete(),1000);
+  }
+}
+
+function createWordScrambleGame(level){
+  bubblesContainer.className='';bubblesContainer.style.display='flex';bubblesContainer.style.flexDirection='column';
+  bubblesContainer.style.gap='20px';bubblesContainer.style.alignItems='center';bubblesContainer.style.maxWidth='500px';bubblesContainer.style.margin='40px auto';
+  const word=level.words[currentWordIndex],scrambled=shuffle(word.split('')).join('');
+  hint.textContent=`Unscramble! (${currentWordIndex+1}/${level.words.length})`;
+  const scrambledDiv=document.createElement('div');
+  scrambledDiv.style.cssText='font-size:36px;font-weight:bold;color:#2c3e50;letter-spacing:8px;padding:20px;border-radius:20px;';
+  scrambledDiv.style.background=`linear-gradient(135deg,${level.theme.color1},${level.theme.color2})`;
+  scrambledDiv.textContent=scrambled;
+  const input=document.createElement('input');input.type='text';input.className='question-input';
+  input.placeholder='Type answer...';input.style.cssText='font-size:24px;padding:15px;width:300px;text-transform:uppercase;';
+  const submitBtn=document.createElement('button');submitBtn.className='close-btn';submitBtn.textContent='Submit';submitBtn.style.marginTop='10px';
+  submitBtn.addEventListener('click',()=>{
+    if(input.value.toUpperCase()===word){
+      currentWordIndex++;
+      if(currentWordIndex<level.words.length){createWordScrambleGame(level);}
+      else{hint.textContent="🎉 All words done!";setTimeout(()=>showLevelComplete(),800);}
+    }else{input.value='';input.style.borderColor='#e74c3c';setTimeout(()=>input.style.borderColor='#bdc3c7',500);}
+  });
+  input.addEventListener('keypress',(e)=>{if(e.key==='Enter')submitBtn.click();});
+  bubblesContainer.append(scrambledDiv,input,submitBtn);input.focus();
+}
+
+function createStoryGame(level){
+  bubblesContainer.className='';bubblesContainer.style.display='flex';bubblesContainer.style.flexDirection='column';
+  bubblesContainer.style.gap='25px';bubblesContainer.style.alignItems='center';bubblesContainer.style.maxWidth='650px';bubblesContainer.style.margin='30px auto';
+  const story={
+    title:"The Night Before the Exam",
+    text:`It was 2 AM, and Sham sat at her desk, surrounded by books. Her eyes were tired, but her heart was determined.
+
+She thought about giving up. The material seemed endless. But then she remembered why she started.
+
+Not for perfection. Not to prove anything. But for herself. For the future she was building, one page at a time.
+
+That night, she made a promise: "I will not give up on me."
+
+And she didn't. Every late night, every early morning, every moment she chose to try again — that's what made her extraordinary.
+
+Sham, your journey isn't about being perfect. It's about being persistent. It's about showing up for yourself, even when it's hard.
+
+You've already proven you're stronger than you know. Every challenge you've faced wasn't just a test. It was proof that you have something special inside you.
+
+The fact that you're here, right now, still trying — that alone makes you a warrior.`,
+    question:"What makes Sham extraordinary?",
+    answers:["persistence","persistent","not giving up","keep going","trying again","showing up","determination","being determined","her strength","not quitting"]
+  };
+  const titleDiv=document.createElement('div');
+  titleDiv.style.cssText='font-size:28px;font-weight:bold;color:#2c3e50;margin-bottom:20px;text-align:center;';
+  titleDiv.innerHTML=`💫 ${story.title} 💫`;
+  const storyDiv=document.createElement('div');
+  storyDiv.style.cssText='font-size:18px;color:#2c3e50;line-height:1.9;padding:35px;border-radius:20px;text-align:left;max-height:400px;overflow-y:auto;box-shadow:0 10px 30px rgba(0,0,0,0.1);';
+  storyDiv.style.background=`linear-gradient(135deg,${level.theme.color1},${level.theme.color2})`;
+  storyDiv.innerHTML=story.text.split('\n\n').map(p=>`<p style="margin-bottom:15px;">${p.trim()}</p>`).join('');
+  hint.textContent="Take your time reading...";
+  const questionDiv=document.createElement('div');
+  questionDiv.style.cssText='font-size:22px;font-weight:bold;color:#2980b9;margin-top:10px;text-align:center;';
+  questionDiv.textContent=story.question;
+  const input=document.createElement('input');input.type='text';input.className='question-input';input.placeholder='Your answer...';input.style.fontSize='20px';
+  const submitBtn=document.createElement('button');submitBtn.className='close-btn';submitBtn.textContent='Submit Answer';
+  submitBtn.addEventListener('click',()=>{
+    const answer=input.value.toLowerCase().trim(),isCorrect=story.answers.some(a=>answer.includes(a.toLowerCase()));
+    if(isCorrect){hint.textContent="✅ Perfect!";setTimeout(()=>showLevelComplete(),1500);}
+    else{input.value='';hint.textContent="Read carefully...";input.style.borderColor='#e74c3c';setTimeout(()=>{input.style.borderColor='#bdc3c7';hint.textContent="Take your time reading...";},3000);}
+  });
+  input.addEventListener('keypress',(e)=>{if(e.key==='Enter')submitBtn.click();});
+  bubblesContainer.append(titleDiv,storyDiv,questionDiv,input,submitBtn);input.focus();
+}
+
+function createMathGame(level){
+  bubblesContainer.className='';bubblesContainer.style.display='flex';bubblesContainer.style.flexDirection='column';
+  bubblesContainer.style.gap='20px';bubblesContainer.style.alignItems='center';bubblesContainer.style.maxWidth='500px';bubblesContainer.style.margin='40px auto';
+  if(mathQuestions.length===0){
+    for(let i=0;i<level.questionsCount;i++){
+      const a=Math.floor(Math.random()*20)+1,b=Math.floor(Math.random()*20)+1;
+      const operations=['+','-','×'],op=operations[Math.floor(Math.random()*operations.length)];
+      let answer;
+      if(op==='+')answer=a+b;else if(op==='-')answer=Math.max(a,b)-Math.min(a,b);else answer=a*b;
+      mathQuestions.push({question:`${op==='-'?Math.max(a,b):a} ${op} ${op==='-'?Math.min(a,b):b}`,answer});
+    }
+    timeLeft=level.maxTime;timerDisplay.textContent=`Time: ${timeLeft}s`;
+    timer=setInterval(()=>{
+      timeLeft--;timerDisplay.textContent=`Time: ${timeLeft}s`;
+      if(timeLeft<=0){clearInterval(timer);timer=null;bubblesContainer.innerHTML='';
+        const timeoutDiv=document.createElement('div');
+        timeoutDiv.style.cssText='font-size:24px;color:#e74c3c;padding:30px;';
+        timeoutDiv.textContent='⏰ Time\'s up! You solved '+mathCorrect+'/'+level.questionsCount;
+        bubblesContainer.appendChild(timeoutDiv);hint.textContent="Try again!";setTimeout(()=>showTryAgain(),1500);
+      }
+    },1000);
+  }
+  if(currentMathIndex>=mathQuestions.length){
+    if(timer){clearInterval(timer);timer=null;}
+    bubblesContainer.innerHTML='';hint.textContent=`🎉 You solved ${mathCorrect}/${level.questionsCount}!`;
+    const resultDiv=document.createElement('div');
+    resultDiv.style.cssText='font-size:28px;font-weight:bold;color:#27ae60;padding:40px;border-radius:20px;text-align:center;';
+    resultDiv.style.background=`linear-gradient(135deg,${level.theme.color1},${level.theme.color2})`;
+    resultDiv.innerHTML=`✅ Completed!<br><br>Score: ${mathCorrect}/${level.questionsCount}`;
+    bubblesContainer.appendChild(resultDiv);setTimeout(()=>showLevelComplete(),1200);return;
+  }
+  const q=mathQuestions[currentMathIndex];
+  hint.textContent=`Problem ${currentMathIndex+1}/${level.questionsCount} | Correct: ${mathCorrect}`;
+  bubblesContainer.innerHTML='';
+  const questionDiv=document.createElement('div');
+  questionDiv.style.cssText='font-size:48px;font-weight:bold;color:#2c3e50;padding:30px;border-radius:20px;';
+  questionDiv.style.background=`linear-gradient(135deg,${level.theme.color1},${level.theme.color2})`;
+  questionDiv.textContent=q.question+' = ?';
+  const input=document.createElement('input');input.type='number';input.className='question-input';
+  input.placeholder='Answer';input.style.cssText='font-size:32px;width:200px;text-align:center;';
+  const submitBtn=document.createElement('button');submitBtn.className='close-btn';submitBtn.textContent='Submit';
+  submitBtn.addEventListener('click',()=>{
+    const userAnswer=parseInt(input.value);
+    if(!isNaN(userAnswer)&&userAnswer===q.answer){mathCorrect++;input.style.borderColor='#27ae60';hint.textContent=`✅ Correct! Score: ${mathCorrect}`;}
+    else{input.style.borderColor='#e74c3c';hint.textContent=`❌ Wrong! Answer was ${q.answer}`;}
+    setTimeout(()=>{currentMathIndex++;createMathGame(level);},500);
+  });
+  input.addEventListener('keypress',(e)=>{if(e.key==='Enter'&&input.value.trim()!=='')submitBtn.click();});
+  bubblesContainer.append(questionDiv,input,submitBtn);setTimeout(()=>input.focus(),100);
+}
+
+function createCanvasGame(level){
+  bubblesContainer.className='';bubblesContainer.style.display='flex';bubblesContainer.style.flexDirection='column';
+  bubblesContainer.style.gap='20px';bubblesContainer.style.alignItems='center';bubblesContainer.style.maxWidth='600px';bubblesContainer.style.margin='30px auto';
+  hint.textContent="Draw your dreams! 🎨";
+  const canvas=document.createElement('canvas');canvas.width=500;canvas.height=400;
+  canvas.style.cssText='border:3px solid #2980b9;border-radius:15px;cursor:crosshair;background:white;touch-action:none;';
+  const ctx=canvas.getContext('2d');let isDrawing=false,lastX=0,lastY=0;
+  const colors=['#2980b9','#e74c3c','#27ae60','#f39c12','#9b59b6','#1abc9c'];let currentColor=colors[0];
+  const colorPalette=document.createElement('div');colorPalette.style.cssText='display:flex;gap:10px;margin-bottom:10px;';
+  colors.forEach(color=>{
+    const colorBtn=document.createElement('div');
+    colorBtn.style.cssText=`width:40px;height:40px;background:${color};border-radius:50%;cursor:pointer;border:${color===currentColor?'3px solid #2c3e50':'2px solid #bdc3c7'};transition:all 0.3s;`;
+    colorBtn.addEventListener('click',()=>{
+      currentColor=color;
+      document.querySelectorAll('div').forEach(btn=>{
+        if(btn.style.background===color){btn.style.border='3px solid #2c3e50';}
+        else if(colors.includes(btn.style.background)){btn.style.border='2px solid #bdc3c7';}
+      });
+    });
+    colorPalette.appendChild(colorBtn);
+  });
+  function startDrawing(e){isDrawing=true;const rect=canvas.getBoundingClientRect();[lastX,lastY]=[e.clientX-rect.left,e.clientY-rect.top];}
+  function draw(e){
+    if(!isDrawing)return;const rect=canvas.getBoundingClientRect();const x=e.clientX-rect.left,y=e.clientY-rect.top;
+    ctx.strokeStyle=currentColor;ctx.lineWidth=3;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(lastX,lastY);ctx.lineTo(x,y);ctx.stroke();
+    [lastX,lastY]=[x,y];
+  }
+  function stopDrawing(){isDrawing=false;}
+  canvas.addEventListener('mousedown',startDrawing);canvas.addEventListener('mousemove',draw);
+  canvas.addEventListener('mouseup',stopDrawing);canvas.addEventListener('mouseout',stopDrawing);
+  canvas.addEventListener('touchstart',(e)=>{e.preventDefault();const touch=e.touches[0];canvas.dispatchEvent(new MouseEvent('mousedown',{clientX:touch.clientX,clientY:touch.clientY}));});
+  canvas.addEventListener('touchmove',(e)=>{e.preventDefault();const touch=e.touches[0];canvas.dispatchEvent(new MouseEvent('mousemove',{clientX:touch.clientX,clientY:touch.clientY}));});
+  canvas.addEventListener('touchend',(e)=>{e.preventDefault();canvas.dispatchEvent(new MouseEvent('mouseup',{}));});
+  const buttonContainer=document.createElement('div');buttonContainer.style.cssText='display:flex;gap:15px;';
+  const clearBtn=document.createElement('button');clearBtn.className='close-btn';clearBtn.textContent='Clear';
+  clearBtn.style.background='linear-gradient(135deg,#e74c3c,#c0392b)';
+  clearBtn.addEventListener('click',()=>ctx.clearRect(0,0,canvas.width,canvas.height));
+  const doneBtn=document.createElement('button');doneBtn.className='close-btn';doneBtn.textContent='Done! ✨';
+  doneBtn.addEventListener('click',()=>{hint.textContent="🎨 Beautiful!";setTimeout(()=>showLevelComplete(),1500);});
+  buttonContainer.append(clearBtn,doneBtn);bubblesContainer.append(colorPalette,canvas,buttonContainer);
+}
+
+function createSpeedClickGame(level){
+  bubblesContainer.className='bubbles';bubblesContainer.style.display='grid';bubblesContainer.style.gridTemplateColumns='repeat(4,1fr)';
+  hint.textContent=`Click only study symbols! Score: ${speedClickScore}/${level.targetCount}`;
+  timeLeft=level.duration;timerDisplay.textContent=`Time: ${timeLeft}s`;
+  timer=setInterval(()=>{
+    timeLeft--;timerDisplay.textContent=`Time: ${timeLeft}s`;
+    if(timeLeft<=0){
+      clearInterval(timer);timer=null;
+      if(speedClickScore>=level.targetCount){hint.textContent="🎉 You did it!";setTimeout(()=>showLevelComplete(),1000);}
+      else{hint.textContent="⏰ Time's up!";setTimeout(()=>showTryAgain(),1000);}
+    }
+  },1000);
+  function spawnSymbol(){
+    if(timeLeft<=0)return;
+    const isTarget=Math.random()<0.6;
+    const symbol=isTarget?level.targetSymbols[Math.floor(Math.random()*level.targetSymbols.length)]:level.distractors[Math.floor(Math.random()*level.distractors.length)];
+    const bubble=document.createElement('div');bubble.className='bubble';bubble.textContent=symbol;
+    bubble.style.background=`linear-gradient(135deg,${level.theme.color1},${level.theme.color2})`;
+    bubble.dataset.isTarget=isTarget?'true':'false';
+    bubble.addEventListener('click',()=>{
+      speedClickClicks++;
+      if(bubble.dataset.isTarget==='true'){speedClickScore++;bubble.classList.add('clicked');}
+      else{bubble.classList.add('wrong');}
+      hint.textContent=`Score: ${speedClickScore}/${level.targetCount} | Clicks: ${speedClickClicks}`;
+      setTimeout(()=>bubble.remove(),300);
+      if(speedClickScore>=level.targetCount){clearInterval(timer);timer=null;hint.textContent="🎉 Perfect!";setTimeout(()=>showLevelComplete(),1000);}
+    });
+    bubblesContainer.appendChild(bubble);
+    setTimeout(()=>{if(bubble.parentNode)bubble.remove();},2000);
+  }
+  const spawnInterval=setInterval(()=>{if(timeLeft>0)spawnSymbol();else clearInterval(spawnInterval);},800);
+}
+
+function createUltimateChallenge(level){
+  if(ultimateStage===0){
+    ultimateStage=0;ultimateCorrect=0;timeLeft=90;timerDisplay.textContent=`Time: ${timeLeft}s`;
+    timer=setInterval(()=>{
+      timeLeft--;timerDisplay.textContent=`Time: ${timeLeft}s`;
+      if(timeLeft<=0){clearInterval(timer);timer=null;showTryAgain();hint.textContent="⏰ Time's up!";}
+    },1000);
+  }
+  bubblesContainer.className='';bubblesContainer.style.display='flex';bubblesContainer.style.flexDirection='column';
+  bubblesContainer.style.gap='20px';bubblesContainer.style.alignItems='center';bubblesContainer.style.maxWidth='550px';bubblesContainer.style.margin='30px auto';
+  bubblesContainer.innerHTML='';
+  const stages=[
+    {title:"Stage 1: Quick Math",question:"15 + 27 = ?",answer:42,type:"number"},
+    {title:"Stage 2: Unscramble",question:"MPRIOSSIE",answer:"PROMISE",type:"text"},
+    {title:"Stage 3: Memory",question:"Remember: 🎯📚💡",symbols:['🎯','📚','💡'],type:"memory"},
+    {title:"Stage 4: True/False",question:"Is persistence > perfection?",answer:"true",type:"boolean"},
+    {title:"Final: Your Promise",question:"What will you never give up on?",answer:"myself",type:"promise"}
+  ];
+  if(ultimateStage>=stages.length){
+    clearInterval(timer);timer=null;hint.textContent=`🏆 Champion! ${ultimateCorrect}/${stages.length}!`;
+    setTimeout(()=>showLevelComplete(),1500);return;
+  }
+  const stage=stages[ultimateStage];
+  hint.textContent=`Challenge ${ultimateStage+1}/${stages.length} | Score: ${ultimateCorrect}`;
+  const titleDiv=document.createElement('div');
+  titleDiv.style.cssText='font-size:28px;font-weight:bold;color:#2c3e50;margin-bottom:15px;';
+  titleDiv.textContent=stage.title;
+  const questionDiv=document.createElement('div');
+  questionDiv.style.cssText='font-size:24px;color:#2980b9;padding:25px;border-radius:15px;margin-bottom:20px;';
+  questionDiv.style.background=`linear-gradient(135deg,${level.theme.color1},${level.theme.color2})`;
+  questionDiv.textContent=stage.question;
+  bubblesContainer.append(titleDiv,questionDiv);
+  if(stage.type==="memory"){
+    const readyBtn=document.createElement('button');readyBtn.className='close-btn';readyBtn.textContent='Memorized!';
+    readyBtn.addEventListener('click',()=>{
+      bubblesContainer.innerHTML='';hint.textContent="Click in order!";
+      const symbolsDiv=document.createElement('div');symbolsDiv.style.cssText='display:flex;gap:15px;justify-content:center;flex-wrap:wrap;';
+      const allSymbols=shuffle([...stage.symbols,'🌟','🚀','💫']);let userOrder=[];
+      allSymbols.forEach(symbol=>{
+        const bubble=document.createElement('div');bubble.className='bubble';bubble.textContent=symbol;
+        bubble.style.background=`linear-gradient(135deg,${level.theme.color1},${level.theme.color2})`;
+        bubble.addEventListener('click',()=>{
+          if(bubble.classList.contains('clicked'))return;
+          bubble.classList.add('clicked');userOrder.push(symbol);
+          if(userOrder.length===stage.symbols.length){
+            const isCorrect=userOrder.every((s,i)=>s===stage.symbols[i]);
+            if(isCorrect)ultimateCorrect++;
+            hint.textContent=isCorrect?"✅ Perfect!":"❌ Wrong!";
+            setTimeout(()=>{ultimateStage++;createUltimateChallenge(level);},1000);
+          }
+        });
+        symbolsDiv.appendChild(bubble);
+      });
+      bubblesContainer.appendChild(symbolsDiv);
+    });
+    bubblesContainer.appendChild(readyBtn);
+  }else if(stage.type==="boolean"){
+    const btnContainer=document.createElement('div');btnContainer.style.cssText='display:flex;gap:20px;';
+    ['True','False'].forEach(option=>{
+      const btn=document.createElement('button');btn.className='close-btn';btn.textContent=option;
+      btn.addEventListener('click',()=>{
+        const isCorrect=option.toLowerCase()===stage.answer;
+        if(isCorrect)ultimateCorrect++;
+        hint.textContent=isCorrect?"✅ Correct!":"❌ Wrong!";
+        setTimeout(()=>{ultimateStage++;createUltimateChallenge(level);},800);
+      });
+      btnContainer.appendChild(btn);
+    });
+    bubblesContainer.appendChild(btnContainer);
+  }else{
+    const input=document.createElement('input');
+    input.type=stage.type==="number"?'number':'text';input.className='question-input';input.placeholder='Your answer...';
+    input.style.cssText='font-size:24px;';if(stage.type==="text")input.style.textTransform='uppercase';
+    const submitBtn=document.createElement('button');submitBtn.className='close-btn';submitBtn.textContent='Submit';
+    submitBtn.addEventListener('click',()=>{
+      const userAnswer=stage.type==="number"?parseInt(input.value):input.value.toUpperCase().trim();
+      const correctAnswer=stage.type==="promise"?true:(stage.type==="number"?stage.answer:stage.answer.toUpperCase());
+      const isCorrect=stage.type==="promise"?input.value.trim().length>0:userAnswer===correctAnswer;
+      if(isCorrect)ultimateCorrect++;
+      hint.textContent=isCorrect?"✅ Correct!":"❌ Wrong!";
+      setTimeout(()=>{ultimateStage++;createUltimateChallenge(level);},800);
+    });
+    input.addEventListener('keypress',(e)=>{if(e.key==='Enter')submitBtn.click();});
+    bubblesContainer.append(input,submitBtn);input.focus();
+  }
+}
+
+function createMemoryGame(level){
+  let pairsArray=[];
+  for(let i=0;i<level.pairs;i++){pairsArray.push(level.symbols[i]);pairsArray.push(level.symbols[i]);}
+  pairsArray=shuffle(pairsArray);
+  const gridSize=level.pairs===3?3:level.pairs===4?4:level.pairs===5?4:4;
+  bubblesContainer.className='memory-grid';bubblesContainer.style.display='grid';
+  bubblesContainer.style.gridTemplateColumns=`repeat(${gridSize},1fr)`;bubblesContainer.style.gap='15px';bubblesContainer.style.justifyItems='center';
+  pairsArray.forEach(symbol=>{
+    const card=document.createElement('div');card.className='memory-card';card.dataset.symbol=symbol;
+    if(level.theme){
+      card.innerHTML=`<div class="memory-card-inner"><div class="memory-card-front" style="background:linear-gradient(135deg,${level.theme.color1},${level.theme.color2})">?</div><div class="memory-card-back" style="background:linear-gradient(135deg,#2980b9,#1a2a6c)">${symbol}</div></div>`;
+    }else{
+      card.innerHTML=`<div class="memory-card-inner"><div class="memory-card-front">?</div><div class="memory-card-back">${symbol}</div></div>`;
+    }
+    bubblesContainer.appendChild(card);
+  });
+  timeLeft=level.maxTime;timerDisplay.textContent=`Time: ${timeLeft}s`;
+  timer=setInterval(()=>{
+    timeLeft--;timerDisplay.textContent=`Time: ${timeLeft}s`;
+    if(timeLeft<=0){clearInterval(timer);timer=null;showTryAgain();hint.textContent="⏰ Time's up!";}
+  },1000);
+  pairsFoundDisplay.textContent=`Pairs: ${matchedPairs}/${level.pairs}`;
+  movesDisplay.textContent=`Moves: ${moves}`;
+  document.querySelectorAll('.memory-card').forEach(card=>{card.removeEventListener('click',handleMemoryCardClick);card.addEventListener('click',handleMemoryCardClick);});
+}
+
+function handleBubbleClick(e){
+  const bubble=e.currentTarget;
+  if(!bubble||bubble.classList.contains('clicked')||bubble.classList.contains('wrong'))return;
+  const isCorrect=bubble.dataset.isCorrect==='true';clicks++;
+  if(isCorrect){correctClicks++;bubble.classList.add('clicked');}
+  else{
+    attempts++;bubble.classList.add('wrong');
+    const level=levels[currentLevel];
+    attemptsDisplay.textContent=`Attempts: ${attempts}/${level.maxAttempts}`;
+    if(attempts>=level.maxAttempts&&correctClicks<level.correctCount){
+      hint.textContent="😔 Out of attempts!";
+      document.querySelectorAll('.bubble').forEach(b=>{
+        if(b.dataset.isCorrect==='true'&&!b.classList.contains('clicked')){b.classList.add('clicked');b.style.opacity='1';}
+      });
+      showTryAgain();return;
+    }
+  }
+  progressDots.forEach((dot,i)=>dot.classList.toggle('active',i<correctClicks));
+  const level=levels[currentLevel];
+  if(correctClicks===1)hint.textContent=`Amazing! ${level.correctCount-1} to go!`;
+  else if(correctClicks===2)hint.textContent=`Great! ${level.correctCount-2} more!`;
+  else if(correctClicks===level.correctCount-1)hint.textContent="One more!";
+  else if(correctClicks===level.correctCount){hint.textContent="🎉 Victory!";setTimeout(()=>showLevelComplete(),800);}
+}
+
+function handleMemoryCardClick(e){
+  const card=e.target.closest('.memory-card');
+  if(!card)return;
+  const level=levels[currentLevel];
+  if(card.classList.contains('flipped')||card.classList.contains('matched'))return;
+  if(flippedCards.length>=2)return;
+  card.classList.add('flipped');flippedCards.push(card);
+  if(flippedCards.length===2){
+    moves++;movesDisplay.textContent=`Moves: ${moves}`;
+    if(moves>level.maxMoves&&matchedPairs<level.pairs){
+      setTimeout(()=>{clearInterval(timer);timer=null;showTryAgain();hint.textContent="❌ Out of moves!";},800);return;
+    }
+    const[card1,card2]=flippedCards,symbol1=card1.dataset.symbol,symbol2=card2.dataset.symbol;
+    if(symbol1===symbol2){
+      setTimeout(()=>{
+        card1.classList.add('matched');card2.classList.add('matched');matchedPairs++;
+        pairsFoundDisplay.textContent=`Pairs: ${matchedPairs}/${level.pairs}`;flippedCards=[];
+        if(matchedPairs===level.pairs){clearInterval(timer);timer=null;hint.textContent="🎉 Memory Master!";setTimeout(()=>showLevelComplete(),800);}
+      },400);
+    }else{
+      setTimeout(()=>{card1.classList.remove('flipped');card2.classList.remove('flipped');flippedCards=[];},1000);
+    }
+  }
+}
+
+function showLevelComplete(){
+  gameContainer.style.display='none';levelComplete.style.display='block';createConfetti();
+  const messages=["Great job, Sham!","You're unstoppable!","Impressive!","Getting better!","Brilliant work!","Level conquered!"];
+  document.querySelector('.level-complete p').textContent=messages[Math.floor(Math.random()*messages.length)]+" Ready for the next challenge?";
+}
+
+function showTryAgain(){gameContainer.style.display='none';tryAgain.style.display='flex';}
+
+function showSurprise(){createConfetti();gameContainer.style.display='none';surprise.style.display='flex';localStorage.setItem('completedAllLevels','true');}
+
+function createConfetti(){
+  const colors=['#2980b9','#1a2a6c','#f1c40f','#2ecc71','#e74c3c','#9b59b6','#3498db'];
+  for(let i=0;i<120;i++){
+    const confetti=document.createElement('div');confetti.className='confetti';
+    confetti.style.left=Math.random()*100+'vw';confetti.style.top='-10px';
+    confetti.style.backgroundColor=colors[Math.floor(Math.random()*colors.length)];
+    confetti.style.width=(Math.random()*12+8)+'px';confetti.style.height=confetti.style.width;
+    confetti.style.borderRadius=Math.random()>.5?'50%':'0';document.body.appendChild(confetti);
+    const anim=confetti.animate([{top:'-10px',opacity:1,transform:'rotate(0deg)'},{top:'100vh',opacity:0,transform:`rotate(${Math.random()*360}deg)`}],{duration:Math.random()*3500+2500,easing:'cubic-bezier(.1,.8,.2,1)'});
+    anim.onfinish=()=>confetti.remove();
+  }
+}
+
+function getRandomQuestion(){
+  if(usedQuestionIndices.length>=personalQuestions.length)usedQuestionIndices=[];
+  const orderedIndices=[0,1,2,3,4,5,6,7,8],available=orderedIndices.filter(i=>!usedQuestionIndices.includes(i));
+  if(available.length===0){usedQuestionIndices=[];return personalQuestions[0];}
+  const idx=available[0];usedQuestionIndices.push(idx);return personalQuestions[idx];
+}
+
+closeBtn.addEventListener('click',()=>{
+  surprise.style.display='none';gameContainer.style.display='block';
+  levels=generateRandomLevels();currentLevel=0;initLevel(currentLevel);
+  if(localStorage.getItem('completedAllLevels')==='true'){
+    setTimeout(()=>{
+      const note=document.createElement('div');note.className='secret-note';
+      note.innerHTML=`<strong>LET says:</strong><br>You didn't just complete a game.<br>You proved something to yourself.`;
+      document.body.appendChild(note);setTimeout(()=>note.remove(),8000);
+    },1000);
+  }
+});
+
+nextLevelBtn.addEventListener('click',()=>{
+  levelComplete.style.display='none';currentLevel++;
+  if(currentLevel<levels.length)initLevel(currentLevel);else showSurprise();
+});
+
+tryAgainBtn.addEventListener('click',()=>{tryAgain.style.display='none';initLevel(currentLevel);});
+skipButton.addEventListener('click',()=>{skipConfirm.style.display='flex';});
+cancelSkipBtn.addEventListener('click',()=>{skipConfirm.style.display='none';});
+confirmSkipBtn.addEventListener('click',()=>{
+  skipConfirm.style.display='none';const question=getRandomQuestion();
+  questionText.textContent=question.question;questionInput.value='';answerConfirmation.textContent='';
+  questionModal.style.display='flex';questionInput.focus();
+});
+cancelQuestionBtn.addEventListener('click',()=>{questionModal.style.display='none';skipConfirm.style.display='flex';});
+challengeQuestionBtn.addEventListener('click',()=>{questionModal.style.display='none';challengeModal.style.display='flex';});
+backFromChallengeBtn.addEventListener('click',()=>{challengeModal.style.display='none';questionModal.style.display='flex';});
+completeChallengeBtn.addEventListener('click',()=>{
+  questionInput.value="Sham/LET";answerConfirmation.textContent="✅ Challenge completed! Answer: Sham/LET";
+  answerConfirmation.style.color="#27ae60";
+  setTimeout(()=>{challengeModal.style.display='none';questionModal.style.display='flex';setTimeout(()=>submitQuestionBtn.click(),800);},1000);
+});
+submitQuestionBtn.addEventListener('click',()=>{
+  const answer=questionInput.value.trim().toLowerCase();
+  const question=personalQuestions.find(q=>q.question===questionText.textContent);
+  if(!question)return;
+  const isChallengeAnswer=["sham/let","let/sham","sham","let","sham let","let sham"].includes(answer);
+  const isCorrect=isChallengeAnswer||question.answers.some(correct=>answer===correct.toLowerCase()||answer.includes(correct.toLowerCase())||correct.toLowerCase().includes(answer));
+  if(isCorrect){
+    answerConfirmation.textContent="✅ Correct! Skip earned.";answerConfirmation.style.color="#27ae60";
+    setTimeout(()=>{questionModal.style.display='none';currentLevel++;
+      if(currentLevel<levels.length)initLevel(currentLevel);else showSurprise();
+    },900);
+  }else{
+    answerConfirmation.textContent="❌ Not quite right!";answerConfirmation.style.color="#e74c3c";
+    questionInput.value='';questionInput.focus();
+  }
+});
+questionInput.addEventListener('keypress',(e)=>{if(e.key==='Enter')submitQuestionBtn.click();});
+
+const today=new Date().toLocaleDateString('en-GB');
+if(localStorage.getItem('studyQuestLastVisit')!==today){
+  localStorage.setItem('studyQuestLastVisit',today);
+  const motivationalMessages=[
+    "You've come so far. Not because it was easy — but because you chose to keep going.",
+    "Every challenge you face is shaping you into someone stronger.",
+    "Your effort today becomes your strength tomorrow.",
+    "Small steps every day lead to incredible places.",
+    "You're not just studying — you're building your future.",
+    "Remember: progress, not perfection.",
+    "The fact that you're here means you haven't given up. That's powerful.",
+    "Today is a new page. Let's make it count."
+  ];
+  const randomMessage=motivationalMessages[Math.floor(Math.random()*motivationalMessages.length)];
+  const morningMessage=document.createElement('div');morningMessage.className='morning-message';
+  morningMessage.innerHTML=`<h2>☀️ Good morning, Sham.</h2><p>Today is ${new Date().toLocaleDateString('en-GB',{weekday:'long',month:'long',day:'numeric'})}.<br>${randomMessage}<br><br>Let's make today count — one page, one problem, one step at a time.<br>I'm right here with you.</p><button class="close-btn">Start My Day</button>`;
+  document.body.appendChild(morningMessage);
+  morningMessage.querySelector('.close-btn').addEventListener('click',()=>morningMessage.remove());
+}
+
+initLevel(currentLevel);
+
+// ✅ تعديل لإخفاء عناصر مرحلة السرعة بعد انتهائها
+function cleanupSpeedClick(){
+    const bubbles = document.querySelectorAll('.bubble');
+    bubbles.forEach(b => b.remove()); // إزالة جميع الفقاعات
+    hint.textContent = "✅ المرحلة انتهت!";
+}
+
+// تعديل في createSpeedClickGame لإضافة استدعاء cleanupSpeedClick عند انتهاء الوقت
+const originalCreateSpeedClickGame = createSpeedClickGame;
+createSpeedClickGame = function(level){
+    originalCreateSpeedClickGame(level);
+    const oldTimer = timer;
+    const checkInterval = setInterval(()=>{
+        if(timeLeft <= 0){
+            cleanupSpeedClick();
+            clearInterval(checkInterval);
+        }
+    }, 500);
+};
+
+</script>
+</body>
+</html>
